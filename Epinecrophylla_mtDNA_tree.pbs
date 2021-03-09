@@ -1,0 +1,50 @@
+#!/bin/bash
+#PBS -q checkpt
+#PBS -l nodes=1:ppn=20
+#PBS -l walltime=72:00:00
+#PBS -N Epinecrophylla_mtDNA_tree
+#PBS -A allocation
+#PBS -m e
+#PBS -M username
+
+date
+
+cd /home/ojohnson/envs/my_root/bin
+
+source activate my_root
+
+cd /work/ojohnson/Epinecrophylla/raxml_mtDNA/
+
+raxmlHPC-PTHREADS-SSE3 \
+    -m GTRGAMMAI \
+    -N 20 \
+    -p 19877 \
+    -n best \
+    -s Epinecrophylla_concatenated_alignments_trimmed.phy \
+    -q Epinecrophylla_PF_partitions.txt \
+    -T 12
+
+# analyze boostrap data sets using the autoMRE function of RAxML
+raxmlHPC-PTHREADS-SSE3 \
+    -m GTRGAMMAI \
+    -N autoMRE \
+    -p 19877 \
+    -b 7175 \
+    -n bootreps \
+    -s Epinecrophylla_concatenated_alignments_trimmed.phy \
+    -T 12
+
+# reconcile the "best" ML tree with the bootreps
+raxmlHPC-SSE3 \
+    -m GTRGAMMAI \
+    -p 12345 \
+    -f b \
+    -t RAxML_bestTree.best \
+    -z RAxML_bootstrap.bootreps \
+    -n final
+
+source deactivate
+
+date
+
+exit 0
