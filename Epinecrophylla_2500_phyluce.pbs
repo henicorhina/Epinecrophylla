@@ -1,0 +1,113 @@
+#!/bin/bash
+#PBS -q checkpt
+#PBS -l nodes=1:ppn=20
+#PBS -l walltime=72:00:00
+#PBS -N Epinecrophylla_2500_phyluce
+#PBS -A allocation
+#PBS -m abe
+#PBS -M username
+
+date
+
+cd /home/ojohnson/envs/my_root/bin
+
+source activate my_root
+
+# change working directory
+export WORK_DIR=/work/ojohnson/Epinecrophylla/
+
+cd $WORK_DIR
+
+mkdir 2500_taxon_set log
+
+phyluce_assembly_match_contigs_to_probes \
+    --contigs 3_spades_assembly/contigs/ \
+    --probes uce-2.5k-probes.fasta \
+    --output spades_matches \
+    --log-path log
+
+# change taxon-list-config
+phyluce_assembly_get_match_counts \
+    --locus-db spades_matches/probe.matches.sqlite \
+    --taxon-list-config 2500_dataset1.conf \
+    --taxon-group 'dataset1' \
+    --output 2500_taxon_set/2500_dataset.conf \
+    --log-path log
+
+phyluce_assembly_get_fastas_from_match_counts \
+    --contigs 3_spades_assembly/contigs/ \
+    --locus-db spades_matches/probe.matches.sqlite \
+    --match-count-output 2500_taxon_set/2500_dataset.conf \
+    --output 2500_taxon_set/2500_dataset.fasta \
+    --log-path log
+
+phyluce_assembly_explode_get_fastas_file \
+    --input 2500_taxon_set/2500_dataset.fasta \
+    --output-dir 2500_taxon_set/exploded-fastas \
+    --by-taxon
+
+
+for i in 2500_taxon_set/exploded-fastas/*.fasta;
+do
+    phyluce_assembly_get_fasta_lengths --input $i --csv;
+done
+
+# change number of taxa
+phyluce_align_seqcap_align \
+    --fasta 2500_taxon_set/2500_dataset.fasta \
+    --output 2500_taxon_set/mafft_alignment/ \
+    --taxa 66 \
+    --aligner mafft \
+    --cores 20 \
+    --log-path log
+
+phyluce_align_get_align_summary_data \
+    --alignments 2500_taxon_set/mafft_alignment/ \
+    --cores 20 \
+    --log-path log
+
+# change number of taxa
+phyluce_align_remove_locus_name_from_nexus_lines \
+    --alignments 2500_taxon_set/mafft_alignment/ \
+    --output 2500_taxon_set/mafft_alignment_clean/ \
+    --taxa 66 \
+    --cores 20 \
+    --log-path log
+
+phyluce_align_format_nexus_files_for_raxml \
+    --alignments 2500_taxon_set/mafft_alignment_clean/ \
+    --output 2500_taxon_set/mafft-raxml/ \
+    --log-path log
+
+cd $WORK_DIR/2500_taxon_set/mafft-raxml/
+
+raxmlHPC-PTHREADS-SSE3 \
+    -m GTRGAMMA \
+    -N 20 \
+    -p 19877 \
+    -n best \
+    -s mafft_alignment_clean.phylip \
+    -T 12
+
+# analyze boostrap data sets using the autoMRE function of RAxML
+raxmlHPC-PTHREADS-SSE3 \
+    -m GTRGAMMA \
+    -N autoMRE \
+    -p 19877 \
+    -b 7175 \
+    -n bootreps \
+    -s mafft_alignment_clean.phylip \
+    -T 12
+
+# reconcile the "best" ML tree with the bootreps
+raxmlHPC-SSE3 \
+    -m GTRGAMMA \
+    -f b \
+    -t RAxML_bestTree.best \
+    -z RAxML_bootstrap.bootreps
+
+source deactivate
+
+date
+
+exit 0

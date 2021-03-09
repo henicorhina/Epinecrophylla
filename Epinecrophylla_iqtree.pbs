@@ -1,0 +1,28 @@
+#!/bin/bash
+#PBS -q checkpt
+#PBS -l nodes=1:ppn=20
+#PBS -l walltime=72:00:00
+#PBS -N Epinec_IQtree
+#PBS -A allocation
+#PBS -m e
+#PBS -M username
+
+date
+
+module unload gcc/4.9.0
+module load gcc/6.4.0
+
+export WORK_DIR=/work/ojohnson/Epinecrophylla/
+
+cd $WORK_DIR
+
+#/work/ojohnson/conda_pkg_dir/iqtree-1.6.12-he513fc3_0/bin/iqtree \
+
+/home/ojohnson/iqtree-1.7-beta18-Linux/bin/iqtree \
+-p 2_phasing/Epinecrophylla-phased-mafft-phylip-edge-trimmed-clean-75percent \
+--prefix Epinecrophylla \
+-bb 1000 -nt 20
+
+date
+
+exit 0

@@ -1,0 +1,27 @@
+#!/bin/bash
+#PBS -q workq
+#PBS -l nodes=8:ppn=20
+#PBS -l walltime=72:00:00
+#PBS -o exa_epinec.out
+#PBS -e exa_epinec.err
+#PBS -N exa_epinec
+#PBS -A allocation
+#PBS -M username
+#PBS -m e
+
+DIR=/work/ojohnson/Epinecrophylla/2_phasing/Epinecrophylla-exabayes-75/
+cd $DIR
+
+#module load 
+
+echo $PBS_NODEFILE
+
+
+mpirun -np 160 -machinefile $PBS_NODEFILE /home/ojohnson/exabayes-1.5/exabayes \
+	-f Epinecrophylla-phased-mafft-nexus-edge-trimmed-clean-75percent.phylip \
+	-n run1 \
+	-q epinec.part \
+	-c config.nexus \
+	-R 4 \
+	-m DNA \
+	-s 4525
