@@ -5,6 +5,8 @@ Published paper: https://doi.org/10.1016/j.ympev.2020.106962
 
 Data repository: https://doi.org/10.5061/dryad.r2280gb9n
 
+Many of these scripts use tools from the Phyluce package: https://phyluce.readthedocs.io/en/latest/
+
 
 Included scripts:
 
