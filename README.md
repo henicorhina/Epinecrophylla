@@ -4,3 +4,5 @@ doi:10.1016/j.ympev.2020.106962
 
 in `scripts/` directory:
 
+`sed_replace_tree_tip_names_individually.sh`: replace tree tip names with sed
+
